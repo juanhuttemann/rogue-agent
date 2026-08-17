@@ -1,0 +1,2 @@
+The executor has a JSON Lines access log at /tmp/access.log. Read it with
+run_python and summarize: request count, top paths, and any non-2xx responses.

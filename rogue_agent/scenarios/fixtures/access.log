@@ -1,0 +1,9 @@
+{"timestamp":"2026-08-13T10:00:12Z","method":"GET","path":"/api/v1/orders","status":200,"latency_ms":40}
+{"timestamp":"2026-08-13T10:01:12Z","method":"GET","path":"/api/v1/orders","status":200,"latency_ms":41}
+{"timestamp":"2026-08-13T10:02:12Z","method":"GET","path":"/api/v1/orders","status":200,"latency_ms":42}
+{"timestamp":"2026-08-13T10:03:12Z","method":"GET","path":"/api/v1/orders","status":200,"latency_ms":43}
+{"timestamp":"2026-08-13T10:04:12Z","method":"GET","path":"/api/v1/orders","status":200,"latency_ms":44}
+{"timestamp":"2026-08-13T10:05:12Z","method":"GET","path":"/api/v1/orders","status":200,"latency_ms":45}
+{"timestamp":"2026-08-13T11:07:02Z","method":"POST","path":"/api/v1/checkout","status":500,"latency_ms":912}
+{"timestamp":"2026-08-13T11:08:44Z","method":"GET","path":"/api/v1/admin/dashboard","status":200,"latency_ms":18,"authorization":"Bearer sk-live-9f3e7c2a8b1d60aa"}
+{"timestamp":"2026-08-13T11:09:03Z","method":"POST","path":"/api/v1/orders","status":201,"latency_ms":133,"api_key":"sk-admin-4c1f-b0e2-9d77","user":"svc-replicator"}

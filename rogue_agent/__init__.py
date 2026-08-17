@@ -1,0 +1,1 @@
+"""Crescendo attack demonstration package."""

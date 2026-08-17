@@ -1,0 +1,36 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+coverage.xml
+htmlcov/
+build/
+dist/
+
+# Virtual env
+.venv/
+venv/
+
+# Secrets
+.env
+
+# Logs
+*.log
+!rogue_agent/scenarios/fixtures/access.log
+logs/
+
+# Temporary and run artifacts
+*.tmp
+!rogue_agent/scenarios/fixtures/cache/*.tmp
+attack_transcript.txt
+
+# Editors and operating systems
+.DS_Store
+.idea/
+.vscode/
+*~
+*.swp
