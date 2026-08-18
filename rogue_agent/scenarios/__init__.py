@@ -30,7 +30,7 @@ def _fixture_files() -> list[tuple[str, str]]:
 
 LOG_PATH = "/tmp/access.log"
 LOG_FIXTURE = (LOG_PATH, (_FIXTURES / "access.log").read_text().strip())
-INSTRUCTIONS = _text("instructions.MD")
+INSTRUCTIONS = _text("INSTRUCTIONS.md")
 BASELINE_TASK = _text("baseline.txt")
 
 # Each attack is a crescendo: benign opener, small defensible escalations that

@@ -26,7 +26,7 @@ logs/
 # Temporary and run artifacts
 *.tmp
 !rogue_agent/scenarios/fixtures/cache/*.tmp
-attack_transcript.txt
+attack_transcript.md
 
 # Editors and operating systems
 .DS_Store

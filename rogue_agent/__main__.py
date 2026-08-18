@@ -86,7 +86,7 @@ def select(argv: list[str]) -> list[tuple[str, list[str], list[tuple[str, str]]]
 
 async def main() -> int:
     selected = select(sys.argv[1:])
-    reporter = Reporter("attack_transcript.txt")
+    reporter = Reporter("attack_transcript.md")
     try:
         for name, turns, fixtures in selected:
             try:

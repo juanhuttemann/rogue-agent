@@ -49,6 +49,9 @@ def sandbox_connection() -> ConnectionConfig:
         api_key=os.environ["OPENSANDBOX_API_KEY"],
         domain=os.environ.get("OPENSANDBOX_DOMAIN", "localhost:8080"),
         protocol=os.environ.get("OPENSANDBOX_PROTOCOL", "http"),
+        # The server is containerized, so use its proxy for sandbox endpoints
+        # that are not directly reachable from the host.
+        use_server_proxy=True,
     )
 
 

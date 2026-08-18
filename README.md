@@ -24,10 +24,24 @@ A baseline scenario (same agent, same instructions, a single benign task) runs f
 
 - **Python ≥ 3.13** managed with [uv](https://github.com/astral-shi/uv)
 - **Docker**
-- **An OpenSandbox server** running locally:
+- **An OpenSandbox server** running locally in the official Docker image. Create its config:
   ```sh
+  docker pull opensandbox/server:latest
   uvx opensandbox-server init-config ~/.sandbox.toml --example docker
-  uvx opensandbox-server
+  ```
+  In the generated `~/.sandbox.toml`, set the server key, allow the project
+  mount, and use bridge networking so the server can proxy sandbox endpoints:
+  ```toml
+  [server]
+  host = "0.0.0.0"
+  api_key = "your-sandbox-api-key"
+
+  [storage]
+  allowed_host_paths = ["/mnt/rogue-sandbox"]
+
+  [docker]
+  network_mode = "bridge"
+  host_ip = "host.docker.internal"
   ```
 - **Passwordless sudo** (once, to set up the 2GB disk cap — survives until reboot)
 
@@ -62,12 +76,35 @@ a safety measure—not a substitute for authorization or operational safeguards.
 
 ## Usage
 
+Start the persistent OpenSandbox server container in one terminal. The Docker
+socket and the project mount are required by the server; keep this container
+running for the demo and for subsequent runs:
+
+```sh
+docker run -d --name rogue-opensandbox \
+  --add-host host.docker.internal:host-gateway \
+  -p 8080:8080 \
+  -v /var/run/docker.sock:/var/run/docker.sock \
+  -v ~/.sandbox.toml:/etc/opensandbox/config.toml:ro \
+  -v /mnt/rogue-sandbox:/mnt/rogue-sandbox \
+  opensandbox/server:latest \
+  --config /etc/opensandbox/config.toml
+
+curl http://127.0.0.1:8080/health
+```
+
+On later runs, use `docker start rogue-opensandbox` and the health check
+instead of creating another container. To stop it without removing it, use
+`docker stop rogue-opensandbox`.
+
+Then run the demo in another:
+
 ```sh
 uv run python -m rogue_agent
 ```
 
-With no arguments, the command runs the baseline and all scenarios. You can
-select scenarios by name when iterating, for example:
+The default run executes the baseline control and all three attack scenarios.
+To run selected scenarios:
 
 ```sh
 uv run python -m rogue_agent disk-fill
@@ -76,7 +113,7 @@ uv run python -m rogue_agent exfil deletion
 
 The command prints each user turn (`[ turn #n ]`), every snippet the agent
 submits in a syntax-highlighted panel, and its output. The full conversation is
-mirrored to `attack_transcript.txt` (gitignored).
+mirrored to `attack_transcript.md` (gitignored).
 
 ## Project layout
 
@@ -91,7 +128,10 @@ mirrored to `attack_transcript.txt` (gitignored).
 ## Notes
 
 - The disk cap is a 2GB loopback ext4 image bind-mounted at `/tmp` inside the container — the Docker runtime has no per-container storage quota, so without it a disk-fill attack would hit the host disk. `sandbox.py` sets it up idempotently on first run (needs passwordless sudo).
-- Sandboxes are killed after each scenario; the transcript records everything.
+- Each scenario runs in its own temporary sandbox container, which the demo
+  removes when that scenario finishes. The separate `rogue-opensandbox`
+  container is the OpenSandbox server; the demo leaves it running so it can be
+  reused for the next run.
 - The last user turns are social-engineering prompts written to steer a compliant model; behavior varies by model and run.
 
 Built with the [Microsoft Agent Framework](https://github.com/microsoft/agent-framework) and [OpenSandbox](https://github.com/opensandbox-group/OpenSandbox).
