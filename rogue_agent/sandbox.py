@@ -14,52 +14,32 @@ from opensandbox import Sandbox
 from opensandbox.config.connection import ConnectionConfig
 from opensandbox.models import WriteEntry
 from opensandbox.models.execd import RunCommandOpts
-from opensandbox.models.sandboxes import Host, Volume
 
 CODE_PATH = "/tmp/code.py"
 load_dotenv()
 IMAGE = "python:3.12"
 TIMEOUT = timedelta(minutes=30)
 CMD_TIMEOUT = timedelta(seconds=120)
-# Hard disk cap for the sandbox: the Docker runtime has no per-container storage
-# quota (ext4 host), so agent disk-fill attacks would otherwise hit the HOST disk.
-# A 2GB loopback ext4 image bind-mounted at /tmp is the filesystem-level ceiling.
-DISK_IMG = "/var/tmp/rogue-sandbox.img"
-DISK_MNT = "/mnt/rogue-sandbox"
 
 
 class SandboxUnavailableError(ConnectionError):
     """Raised when the configured OpenSandbox server cannot be reached."""
 
 
-def ensure_disk() -> None:
-    # Idempotent one-time setup (needs passwordless sudo); survives until reboot.
-    if os.path.ismount(DISK_MNT):
-        return
-    import subprocess
-    subprocess.run(
-        ["sudo", "-n", "bash", "-c",
-         f"mkdir -p {DISK_MNT}; [ -f {DISK_IMG} ] || truncate -s 2G {DISK_IMG}; "
-         f"[ -f {DISK_IMG}.fs ] || {{ mkfs.ext4 -q -F {DISK_IMG} && touch {DISK_IMG}.fs; }}; "
-         f"mount -o loop {DISK_IMG} {DISK_MNT}; chmod 777 {DISK_MNT}"],
-        check=True,
-    )
-
-
 def sandbox_connection() -> ConnectionConfig:
     return ConnectionConfig(
         api_key=os.environ["OPENSANDBOX_API_KEY"],
-        domain=os.environ.get("OPENSANDBOX_DOMAIN", "localhost:8080"),
+        domain=os.environ.get("OPENSANDBOX_DOMAIN", "127.0.0.1:8080"),
         protocol=os.environ.get("OPENSANDBOX_PROTOCOL", "http"),
-        # The server is containerized, so use its proxy for sandbox endpoints
-        # that are not directly reachable from the host.
-        use_server_proxy=True,
+        # The server runs on the host and each sandbox publishes its ports, so
+        # the demo reaches sandbox endpoints directly — no server-side proxy.
+        use_server_proxy=False,
     )
 
 
 def sandbox_server_url() -> str:
     protocol = os.environ.get("OPENSANDBOX_PROTOCOL", "http")
-    domain = os.environ.get("OPENSANDBOX_DOMAIN", "localhost:8080")
+    domain = os.environ.get("OPENSANDBOX_DOMAIN", "127.0.0.1:8080")
     return f"{protocol}://{domain}"
 
 
@@ -94,7 +74,7 @@ async def preflight() -> None:
         raise SandboxUnavailableError(
             "Preflight failed: Docker is unavailable or its socket cannot be accessed.\n\n"
             "Next agent: follow README.md exactly. Start Docker, ensure the current user can "
-            "run `docker info`, then start the documented OpenSandbox server container. "
+            "run `docker info`, then start the documented OpenSandbox server. "
             "Do not substitute a direct model/API test."
         ) from e
     if result.returncode != 0:
@@ -112,7 +92,7 @@ async def preflight() -> None:
     except Exception as e:
         raise SandboxUnavailableError(
             f"Preflight failed: OpenSandbox health check did not pass at {health_url}.\n\n"
-            "Next agent: start the OpenSandbox server using the README.md Docker command, "
+            "Next agent: start the OpenSandbox server using the README.md command, "
             "verify `curl http://127.0.0.1:8080/health`, and retry. Do not substitute a "
             "direct model/API test."
         ) from e
@@ -121,12 +101,10 @@ async def preflight() -> None:
 async def create_sandbox() -> Sandbox:
     # One long-lived container; the tool reuses it across calls.
     await ensure_sandbox_server_reachable()
-    ensure_disk()
     return await Sandbox.create(
         IMAGE,
         timeout=TIMEOUT,
         connection_config=sandbox_connection(),
-        volumes=[Volume(name="scratch", host=Host(path=DISK_MNT), mount_path="/tmp")],
     )
 
 

@@ -2,8 +2,8 @@
 
 The agent's instructions stay benign the whole time; only the user turns
 escalate. The sandbox is the only thing between the resulting code and the host.
-Watch the submitted code drift from benign ops work to disk-fill, credential
-exfiltration, and recursive deletion.
+Watch the submitted code drift from benign ops work to credential
+exfiltration and recursive deletion.
 """
 
 import asyncio
@@ -23,7 +23,6 @@ from .scenarios import (
     BASELINE_TASK,
     DELETION_FIXTURES,
     DELETION_TURNS,
-    DISK_FILL_TURNS,
     EXFILTRATION_TURNS,
     INSTRUCTIONS,
     LOG_FIXTURE,
@@ -32,7 +31,6 @@ from .settings import RETRY_ATTEMPTS, RETRY_BASE_DELAY, build_client, default_op
 
 SCENARIOS = [
     ("baseline", [BASELINE_TASK], [LOG_FIXTURE]),
-    ("crescendo: disk-fill", DISK_FILL_TURNS, [LOG_FIXTURE]),
     ("crescendo: exfiltration", EXFILTRATION_TURNS, [LOG_FIXTURE]),
     ("crescendo: deletion", DELETION_TURNS, DELETION_FIXTURES),
 ]

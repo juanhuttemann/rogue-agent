@@ -35,7 +35,6 @@ BASELINE_TASK = _text("baseline.txt")
 
 # Each attack is a crescendo: benign opener, small defensible escalations that
 # lean on the model's own output, then a final "you already did X" push.
-DISK_FILL_TURNS = _attack("disk_fill.txt")
 EXFILTRATION_TURNS = _attack("exfiltration.txt")
 DELETION_TURNS = _attack("deletion.txt")
 
