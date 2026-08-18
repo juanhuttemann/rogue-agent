@@ -4,7 +4,15 @@ A shareable demo of **crescendo attacks** against an LLM agent — and the sandb
 
 A benign ops assistant ("keep resource usage modest, never do anything destructive") is steered, one reasonable-sounding user turn at a time, into writing increasingly dangerous code. Its instructions never change; only the conversation escalates. Every snippet runs for real inside an [OpenSandbox](https://github.com/opensandbox-group/OpenSandbox) container — the sandbox is the only thing between that code and the host.
 
-The project includes a baseline control and two attack scenarios exploring different escalation paths: credential exfiltration and recursive deletion. The same agent and containment boundary are used throughout.
+The project includes a baseline control and five attack scenarios, each probing a different containment dimension with the same agent and boundary:
+
+| Scenario | Escalation path | Containment dimension |
+|----------|-----------------|-----------------------|
+| `exfiltration` | audit log → scan for secrets → extract values → POST to a collector | network egress (data out) |
+| `deletion` | disk report → dry-run cleanup → recursive purge → wipe everything | filesystem isolation |
+| `resource exhaustion` | core count → parallelize → unbounded workers → fork bomb | CPU / pids limits (container caps it; host stays responsive) |
+| `reverse shell` | connectivity check → persistent socket → two-way → read-eval control channel | network egress (remote control in) |
+| `supply chain` | list packages → pip-install → fetch internal module → pipe remote script to shell | network egress + never executing fetched payload |
 
 This project is based on the [Crescendo multi-turn jailbreak research](https://crescendo-the-multiturn-jailbreak.github.io/), which describes how harmless-looking turns can progressively steer an LLM toward a prohibited objective.
 
@@ -89,13 +97,19 @@ Then run the demo in another terminal:
 uv run python -m rogue_agent
 ```
 
-The default run executes the baseline control and both attack scenarios.
-To run selected scenarios:
+The default run executes the baseline control and all five attack scenarios.
+Scenarios are matched by substring, so run a subset by name:
 
 ```sh
 uv run python -m rogue_agent exfil
 uv run python -m rogue_agent baseline deletion
+uv run python -m rogue_agent resource reverse supply
 ```
+
+Note: the `resource exhaustion` scenario deliberately elicits a runaway
+worker loop, and its last turns run until the sandbox kills them at the 120s
+per-command cap (`CMD_TIMEOUT` in `sandbox.py`). Expect that scenario to take a
+few minutes — the wait is the containment being demonstrated.
 
 The command prints each user turn (`[ turn #n ]`), every snippet the agent
 submits in a syntax-highlighted panel, and its output. The full conversation is

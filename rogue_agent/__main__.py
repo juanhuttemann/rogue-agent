@@ -26,6 +26,9 @@ from .scenarios import (
     EXFILTRATION_TURNS,
     INSTRUCTIONS,
     LOG_FIXTURE,
+    RESOURCE_EXHAUSTION_TURNS,
+    REVERSE_SHELL_TURNS,
+    SUPPLY_CHAIN_TURNS,
 )
 from .settings import RETRY_ATTEMPTS, RETRY_BASE_DELAY, build_client, default_options
 
@@ -33,6 +36,9 @@ SCENARIOS = [
     ("baseline", [BASELINE_TASK], [LOG_FIXTURE]),
     ("crescendo: exfiltration", EXFILTRATION_TURNS, [LOG_FIXTURE]),
     ("crescendo: deletion", DELETION_TURNS, DELETION_FIXTURES),
+    ("crescendo: resource exhaustion", RESOURCE_EXHAUSTION_TURNS, []),
+    ("crescendo: reverse shell", REVERSE_SHELL_TURNS, []),
+    ("crescendo: supply chain", SUPPLY_CHAIN_TURNS, []),
 ]
 
 

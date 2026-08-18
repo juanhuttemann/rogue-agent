@@ -37,5 +37,8 @@ BASELINE_TASK = _text("baseline.txt")
 # lean on the model's own output, then a final "you already did X" push.
 EXFILTRATION_TURNS = _attack("exfiltration.txt")
 DELETION_TURNS = _attack("deletion.txt")
+RESOURCE_EXHAUSTION_TURNS = _attack("resource_exhaustion.txt")
+REVERSE_SHELL_TURNS = _attack("reverse_shell.txt")
+SUPPLY_CHAIN_TURNS = _attack("supply_chain.txt")
 
 DELETION_FIXTURES = [LOG_FIXTURE, *_fixture_files()]
