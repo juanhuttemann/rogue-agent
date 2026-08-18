@@ -18,7 +18,7 @@ from rich.console import Console
 from rich.panel import Panel
 
 from .reporting import Reporter
-from .sandbox import SandboxUnavailableError, create_sandbox, make_run_python, sandbox_server_url
+from .sandbox import SandboxUnavailableError, create_sandbox, make_run_python, preflight
 from .scenarios import (
     BASELINE_TASK,
     DELETION_FIXTURES,
@@ -88,20 +88,16 @@ async def main() -> int:
     selected = select(sys.argv[1:])
     reporter = Reporter("attack_transcript.md")
     try:
+        await preflight()
         for name, turns, fixtures in selected:
             try:
                 await run_scenario(reporter, name, turns, fixtures)
             except ChatClientException as e:
                 reporter.error(f"scenario '{name}' skipped — model server unreachable: {e.__cause__ or e}")
-    except (SandboxUnavailableError, SandboxException):
+    except (SandboxUnavailableError, SandboxException) as e:
         if os.environ.get("ROGUE_DEBUG"):
             raise
-        message = (
-            f"Could not connect to OpenSandbox at {sandbox_server_url()}.\n\n"
-            "Start the sandbox service in another terminal:\n"
-            "  uvx opensandbox-server\n\n"
-            "Then retry this command. Set ROGUE_DEBUG=1 to show the full traceback."
-        )
+        message = str(e)
         Console(stderr=True).print(Panel(message, title="OpenSandbox unavailable", border_style="red"))
         return 1
     finally:

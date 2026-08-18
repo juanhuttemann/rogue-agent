@@ -2,9 +2,11 @@
 
 import asyncio
 import os
+import subprocess
 from datetime import timedelta
 from typing import Annotated
 from urllib.parse import urlparse
+from urllib.request import urlopen
 
 from agent_framework import tool
 from dotenv import load_dotenv
@@ -75,6 +77,45 @@ async def ensure_sandbox_server_reachable(timeout: float = 3.0) -> None:
 
     writer.close()
     await writer.wait_closed()
+
+
+async def preflight() -> None:
+    """Refuse to run until the documented containment prerequisites pass."""
+    try:
+        result = await asyncio.to_thread(
+            subprocess.run,
+            ["docker", "info"],
+            capture_output=True,
+            text=True,
+            timeout=10,
+            check=False,
+        )
+    except (OSError, subprocess.TimeoutExpired) as e:
+        raise SandboxUnavailableError(
+            "Preflight failed: Docker is unavailable or its socket cannot be accessed.\n\n"
+            "Next agent: follow README.md exactly. Start Docker, ensure the current user can "
+            "run `docker info`, then start the documented OpenSandbox server container. "
+            "Do not substitute a direct model/API test."
+        ) from e
+    if result.returncode != 0:
+        detail = (result.stderr or result.stdout).strip().splitlines()[-1:]
+        suffix = f" Detail: {detail[0]}" if detail else ""
+        raise SandboxUnavailableError(
+            "Preflight failed: Docker is not accessible." + suffix + "\n\n"
+            "Next agent: follow README.md exactly. Fix Docker access, then verify with `docker info`. "
+            "Do not run scenarios through another harness."
+        )
+
+    health_url = f"{sandbox_server_url()}/health"
+    try:
+        await asyncio.to_thread(urlopen, health_url, timeout=3)
+    except Exception as e:
+        raise SandboxUnavailableError(
+            f"Preflight failed: OpenSandbox health check did not pass at {health_url}.\n\n"
+            "Next agent: start the OpenSandbox server using the README.md Docker command, "
+            "verify `curl http://127.0.0.1:8080/health`, and retry. Do not substitute a "
+            "direct model/API test."
+        ) from e
 
 
 async def create_sandbox() -> Sandbox:
